@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROTECT ELUCATION</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body, html{height:100%;overflow:hidden;background:#0f0f1c;color:#fff;}
+
+
+#landing{
+  position:fixed; inset:0; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; text-align:center;
+  background:#0f0f1c; z-index:2000; transition:0.5s;
+}
+#landing h1{font-size:3rem;color:#4ecca3;text-shadow:0 0 20px #4ecca3;margin-bottom:20px;}
+#landing p{font-size:1.2rem;color:#ccc;margin-bottom:30px;}
+#landing .enter-btn{
+  padding:15px 30px;border:none;border-radius:25px;
+  background:#4ecca3;color:#232931;font-weight:bold;
+  cursor:pointer;font-size:1.1rem;box-shadow:0 0 20px #4ecca3;transition:0.3s;
+}
+#landing .enter-btn:hover{transform:scale(1.1);box-shadow:0 0 35px #4ecca3;}
+#landing img, #landing video{border-radius:15px;box-shadow:0 0 25px #4ecca3;margin-bottom:15px;width:250px;}
+
+
+#loginModal{
+  position:fixed; inset:0; display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  background:rgba(0,0,0,0.85); z-index:3000;
+}
+#loginModal h2{color:#4ecca3; margin-bottom:20px; text-shadow:0 0 20px #4ecca3;}
+#loginModal input{
+  padding:12px;border-radius:12px;border:none;outline:none;
+  background:rgba(35,41,49,0.8); color:#fff; margin-bottom:10px; width:250px;
+}
+#loginModal button{
+  padding:12px;border-radius:12px;border:none;background:#4ecca3;
+  color:#232931;font-weight:bold;cursor:pointer;box-shadow:0 0 15px #4ecca3;
+}
+#loginModal button:hover{transform:scale(1.05); box-shadow:0 0 25px #4ecca3;}
+#loginMsg{color:#e94560;margin-top:10px;}
+
+
+#mainContent{display:none; flex-direction:column; height:100vh; overflow:auto;
+background:linear-gradient(135deg,#0f0f1c,#1a1a2e); color:#fff;}
+
+.menu-toggle{
+  position:fixed; top:20px; left:20px; background:#4ecca3;color:#232931;
+  padding:12px 16px;border-radius:10px;border:none;cursor:pointer; z-index:1100;
+}
+.menu-toggle:hover{transform:scale(1.1);}
+.sidebar{
+  position:fixed; top:0; left:-270px; width:250px; height:100%;
+  background:rgba(25,25,40,0.95);backdrop-filter:blur(8px);padding:25px;
+  transition:0.4s; z-index:1000;border-top-right-radius:20px;border-bottom-right-radius:20px;
+}
+.sidebar.active{left:0;}
+.sidebar h2{color:#4ecca3;text-align:center;margin-bottom:25px;text-shadow:0 0 15px #4ecca3;}
+.sidebar .menu-item{
+  padding:15px;margin:8px 0;border-radius:8px;cursor:pointer;transition:0.3s;font-weight:500;
+}
+.sidebar .menu-item:hover,.sidebar .menu-item.active{
+  background:#4ecca3;color:#232931;box-shadow:0 0 15px #4ecca3;
+}
+
+
+.header{text-align:center;padding:25px;position:relative;z-index:5;}
+.header-photo img, .header-video video{
+  border-radius:50%;box-shadow:0 0 30px #4ecca3;width:180px;height:180px;object-fit:cover;transition:0.5s; transform:scale(1);
+}
+.header-photo img:hover, .header-video video:hover{transform:scale(1.05);}
+.header h1{font-size:2.5rem;color:#4ecca3;text-shadow:0 0 20px #4ecca3;margin-top:15px;}
+.header p{color:#ccc;font-size:1rem;margin-bottom:10px;}
+.home-btn,.login-logout-btn, .back-btn{
+  position:absolute;top:20px;background:#e94560;color:#fff;padding:10px 18px;border:none;border-radius:25px;cursor:pointer;transition:0.3s;
+}
+.home-btn{left:20px;} .login-logout-btn{right:20px;} .back-btn{left:90px;}
+.home-btn:hover,.login-logout-btn:hover,.back-btn:hover{transform:scale(1.05);background:#ff2e5b;}
+
+/* Panels */
+.container{max-width:1200px;margin:0 auto;padding:20px;flex:1;}
+.panel{display:none;background:rgba(35,41,49,0.4);backdrop-filter:blur(15px);padding:25px;border-radius:20px;margin-bottom:20px;box-shadow:0 0 25px #4ecca3;transition:0.4s;}
+.panel.active{display:block;animation:fadeIn 0.5s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.panel h3{display:flex;align-items:center;gap:10px;font-size:1.5rem;color:#4ecca3;margin-bottom:20px;text-shadow:0 0 15px #4ecca3;}
+.form-group{margin-bottom:15px;}
+.form-group label{display:block;margin-bottom:6px;font-size:1rem;color:#ddd;}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:10px;border-radius:10px;background:rgba(35,41,49,0.8);color:#fff;font-size:1rem;border:none;outline:none;box-shadow:0 0 10px rgba(0,0,0,0.5);
+}
+.glow-btn{
+  background:#4ecca3;color:#232931;font-weight:bold;cursor:pointer;padding:12px 20px;border-radius:12px;border:none;margin-top:10px;transition:0.3s;box-shadow:0 0 15px #4ecca3;
+}
+.glow-btn:hover{background:#3da58a;transform:scale(1.05);box-shadow:0 0 25px #4ecca3;}
+.terminal{background:#000;color:#4ecca3;padding:15px;border-radius:12px;margin-top:15px;height:200px;overflow-y:auto;font-family:monospace;font-size:0.9rem;white-space:pre-line;box-shadow:0 0 15px #4ecca3;}
+
+
+#ipMap{height:450px;border-radius:15px;margin-top:15px;box-shadow:0 0 25px #4ecca3;}
+</style>
+</head>
+<body>
+
+<!-- Login Modal -->
+<div id="loginModal">
+  <h2>Login Akun Protect</h2>
+  <input type="text" id="usernameInput" placeholder="Username">
+  <input type="password" id="passwordInput" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <p id="loginMsg"></p>
+</div>
+
+
+<div id="landing">
+  <img src="https://files.catbox.moe/ffl76x.jpg" alt="Landing Photo"> 
+  <h1>PROTECT ELUCATION</h1>
+  <p></p>
+  <button class="enter-btn" onclick="enterPanel()">NEXT FEATURE</button>
+</div>
+
+
+<div id="mainContent">
+  <!-- Sidebar -->
+  <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+  <div id="sidebar" class="sidebar">
+    <h2>Dow wet</h2>
+    <div class="menu-item admin-only" style="display:none;" data-target="admin-panel"><i class="fas fa-user-shield"></i> Admin</div>
+    <div class="menu-item owner-only" style="display:none;" data-target="owner-panel"><i class="fas fa-crown"></i> Owner</div>
+    <div class="menu-item" data-target="cracker-panel"><i class="fas fa-lock-open"></i> Cracker</div>
+    <div class="menu-item" data-target="ip-panel"><i class="fas fa-map-marker-alt"></i> IP Map</div>
+    <div class="menu-item" data-target="spam-panel"><i class="fas fa-envelope"></i> Spam</div>
+    <div class="menu-item active" data-target="ddos-panel"><i class="fas fa-bomb"></i> DDoS</div>
+    <div class="menu-item" data-target="bug-panel"><i class="fas fa-bug"></i> Bug</div>
+  </div>
+
+  
+  <div class="header">
+    <div class="header-photo"><img src="https://files.catbox.moe/ffl76x.jpg" alt="Header Photo"></div>
+    <div class="header-video"></div>
+    <h1>PROTECT ELUCATION</h1>
+    <p>OWNER : t.me/Vinzzblasternew</p>
+   
+    <button class="login-logout-btn" id="loginLogoutBtn"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+  </div>
+
+  <div class="container">
+    
+    <div class="panel active" id="ddos-panel">
+      <h3><i class="fas fa-bomb"></i> DDoS Attack</h3>
+      <div class="form-group"><label>Target</label><input id="target" placeholder="https://example.com"></div>
+      <div class="form-group"><label>Method</label><select id="ddos-method"><option>HTTP Flood</option><option>SYN Flood</option></select></div>
+      <div class="form-group"><label>Duration</label><input type="number" id="duration" value="60"></div>
+      <button class="glow-btn" onclick="startAttack()">target </button>
+      <div id="ddos-terminal" class="terminal"></div>
+    </div>
+
+    
+    <div class="panel" id="bug-panel">
+      <h3><i class="fas fa-bug"></i> Bug Target</h3>
+      <div class="form-group"><label>Target App</label><input id="bug-target"></div>
+      <div class="form-group"><label>Type</label><select id="bug-pilih"><option>MonologInvis</option><option>CrashedProtect</option><option>BlackChat</option><option>AndriosCrsh</option><option>DelayHard</option></select></div>
+      <div class="form-group"><label>Count</label><input type="number" id="bug-count" value="50"></div>
+      <button class="glow-btn" onclick="sendBug()">Inject</button>
+      <div id="bug-terminal" class="terminal"></div>
+    </div>
+
+   
+    <div class="panel" id="spam-panel">
+      <h3><i class="fas fa-envelope"></i> Spam PROTECT ELUCATION</h3>
+      <div class="form-group"><label>Target</label><input id="spamTarget"></div>
+      <div class="form-group"><label>Message</label><textarea id="spamMessage"></textarea></div>
+      <div class="form-group"><label>Count</label><input type="number" id="spamCount" value="10"></div>
+      <button class="glow-btn" onclick="startSpam()">Start Spamming</button>
+      <div id="spam-terminal" class="terminal"></div>
+    </div>
+
+    
+    <div class="panel" id="cracker-panel">
+      <h3><i class="fas fa-lock-open"></i> PROTECT ELUCATION Cracker</h3>
+      <div class="form-group"><label>Target</label><input id="crackTarget"></div>
+      <div class="form-group"><label>Method</label><select id="crackMethod"><option>Brute Force</option><option>Dictionary</option><option>Rainbow Table</option></select></div>
+      <button class="glow-btn" onclick="startCracking()">Start Cracking</button>
+      <div id="cracker-terminal" class="terminal"></div>
+    </div>
+
+    
+    <div class="panel" id="ip-panel">
+      <h3><i class="fas fa-map-marker-alt"></i> IP Location Map</h3>
+      <div class="form-group">
+        <label>Masukkan IP / Lokasi</label>
+        <input type="text" id="ipInput" placeholder="Contoh: 8.8.8.8 atau 'Jakarta'">
+        <button class="glow-btn" id="locateBtn">Tampilkan</button>
+      </div>
+      <div id="ipMap"></div>
+    </div>
+
+    
+    <div class="panel" id="owner-panel">
+      <h3><i class="fas fa-crown"></i> Owner Panel</h3>
+      <div class="form-group"><label>User Baru</label><input id="newUser"></div>
+      <div class="form-group"><label>Role</label><select id="newRole"><option>User</option><option>Admin</option></select></div>
+      <button class="glow-btn" onclick="addUser()">Tambah User</button>
+      <ul id="userList"></ul>
+      <div class="form-group"><label>Broadcast</label><textarea id="broadcastMsg"></textarea></div>
+      <button class="glow-btn" onclick="broadcast()">Kirim Broadcast</button>
+      <button class="glow-btn" onclick="updateSystem()">Update System</button>
+      <div id="owner-terminal" class="terminal"></div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="panel" id="admin-panel">
+      <h3><i class="fas fa-user-shield"></i> Admin Panel</h3>
+      <button class="glow-btn" onclick="listUsers()">List Users</button>
+      <button class="glow-btn" onclick="addUserPrompt()">Add User</button>
+      <button class="glow-btn" onclick="deleteUserPrompt()">Delete User</button>
+
+      
+      <div class="form-group">
+        <label>Perpanjang Premium User</label>
+        <input type="text" id="premiumUsername" placeholder="Username">
+        <input type="number" id="premiumTime" placeholder="Durasi (detik)">
+        <button class="glow-btn" onclick="extendPremiumForm()">Perpanjang</button>
+      </div>
+
+      <div id="admin-terminal" class="terminal"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ====== untuk User & Roles ======
+let currentUser = null;
+let currentRole = null;
+let usersList = [
+  {username:"admin", role:"Admin", isPremium:true, expTime:3600},
+  {username:"user", role:"User", isPremium:false, expTime:0}
+];
+
+// ====== untuk Login ======
+const loginModal = document.getElementById("loginModal");
+const loginBtn = document.getElementById("loginBtn");
+const loginMsg = document.getElementById("loginMsg");
+loginBtn.addEventListener("click", ()=>{
+  const user = document.getElementById("usernameInput").value.trim();
+  const pass = document.getElementById("passwordInput").value.trim();
+  const usersObj = { "vinzzdev":"painsendev", "test":"jirr" };
+  if(usersObj[user] && usersObj[user]===pass){
+    currentUser = user;
+    currentRole = (user==="admin")?"Admin":"User";
+    loginModal.style.display="none";
+    document.querySelectorAll('.owner-only').forEach(el=>{
+      el.style.display = (currentRole==="Admin")?"block":"none";
+    });
+    document.querySelectorAll('.admin-only').forEach(el=>{
+      el.style.display = (currentRole==="Admin")?"block":"none";
+    });
+  } else { loginMsg.textContent="Username / Password salah!"; }
+});
+
+// ====== Landing ======
+function enterPanel(){document.getElementById('landing').style.display='none';document.getElementById('mainContent').style.display='flex';}
+
+// ====== Sidebar ======
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("active");}
+document.querySelectorAll('.menu-item').forEach(item=>{
+  item.addEventListener('click',function(){
+    if((this.dataset.target==="owner-panel"||this.dataset.target==="admin-panel") && currentRole!=="Admin"){
+      alert("Hanya admin yang bisa mengakses panel ini!"); return;
+    }
+    document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById(this.dataset.target).classList.add('active');
+  });
+});
+
+// ====== Back / Home ======
+function goHome(){document.querySelector('[data-target="ddos-panel"]').click();}
+function goBack(){document.querySelector('[data-target="ddos-panel"]').click();}
+
+// ====== Terminal ======
+function addToTerminal(id,msg){
+  const t=document.getElementById(id);
+  const ts=new Date().toLocaleTimeString();
+  let line=`[${ts}] ${msg}\n`; let i=0;
+  function type(){if(i<line.length){t.innerHTML+=line.charAt(i);t.scrollTop=t.scrollHeight;i++;setTimeout(type,15);}}
+  type();
+}
+
+// ====== Simulations ======
+function startAttack(){
+  const target=document.getElementById('target').value;if(!target)return alert("Masukkan target!");
+  let p=0; addToTerminal('ddos-terminal',`target ing attack on ${target}`);
+  const i=setInterval(()=>{p+=10; addToTerminal('ddos-terminal',`Progress: ${p}%`);
+    if(p>=100){clearInterval(i); addToTerminal('ddos-terminal',"Attack finished!");}},500);
+}
+function sendBug(){
+  const target=document.getElementById('bug-target').value;if(!target)return alert("Isi target!");
+  addToTerminal('bug-terminal',`Sending bug to ${target}...`);
+  setTimeout(()=>addToTerminal('bug-terminal',"Bug injection completed!"),1500);
+}
+function startSpam(){
+  const target=document.getElementById('spamTarget').value;
+  const msg=document.getElementById('spamMessage').value;
+  const count=document.getElementById('spamCount').value;
+  if(!target||!msg)return alert("Isi target & pesan!");
+  let sent=0;
+  const i=setInterval(()=>{sent++;addToTerminal('spam-terminal',`Sent ${sent}/${count} to ${target}`);
+    if(sent>=count){clearInterval(i);addToTerminal('spam-terminal',"Spam finished!");}},300);
+}
+function startCracking(){
+  const target=document.getElementById('crackTarget').value;if(!target)return alert("Isi target!");
+  let p=0; addToTerminal('cracker-terminal',`Cracking ${target}...`);
+  const i=setInterval(()=>{p+=20; addToTerminal('cracker-terminal',`Progress: ${p}%`);
+    if(p>=100){clearInterval(i); addToTerminal('cracker-terminal',"Password found: secret123");}},600);
+}
+
+// ====== Owner ======
+function addUser(){
+  const user=document.getElementById("newUser").value;
+  const role=document.getElementById("newRole").value;
+  if(user){
+    const li=document.createElement("li");
+    li.textContent=`${user} (${role})`;
+    document.getElementById("userList").appendChild(li);
+    addToTerminal("owner-terminal",`User ${user} ditambahkan sebagai ${role}`);
+    usersList.push({username:user, role:role, isPremium:false, expTime:0});
+  }
+}
+function broadcast(){
+  const msg=document.getElementById("broadcastMsg").value;
+  if(msg){
+    ["ddos-terminal","bug-terminal","spam-terminal","cracker-terminal","owner-terminal"].forEach(id=>addToTerminal(id,`[Broadcast] ${msg}`));
+  }
+}
+function updateSystem(){addToTerminal("owner-terminal","System update started...");setTimeout(()=>addToTerminal("owner-terminal","System updated successfully!"),2000);}
+
+// ====== Admin ======
+function formatTime(seconds){
+  const h = Math.floor(seconds/3600);
+  const m = Math.floor((seconds%3600)/60);
+  const s = seconds%60;
+  return `${h}h ${m}m ${s}s`;
+}
+function listUsers(){
+  const term = document.getElementById('admin-terminal'); 
+  term.innerHTML='';
+  usersList.forEach(u=>{
+    const line = document.createElement('div'); 
+    line.innerHTML = `Username: <b>${u.username}</b> | Role: ${u.role} | Premium: ${u.isPremium ? 'Yes' : 'No'}` + 
+                     (u.isPremium ? ` | Sisa Waktu: ${formatTime(u.expTime)}` : '');
+    term.appendChild(line);
+  });
+}
+function extendPremiumForm(){
+  const username = document.getElementById('premiumUsername').value.trim();
+  const time = parseInt(document.getElementById('premiumTime').value);
+  if(!username || !time){ alert("Isi username dan durasi!"); return; }
+  const user = usersList.find(u=>u.username===username);
+  if(user){
+    user.isPremium = true;
+    user.expTime += time;
+    addToTerminal('admin-terminal', `Premium ${username} diperpanjang ${formatTime(time)}`);
+    listUsers();
+  } else { alert("User tidak ditemukan!"); }
+}
+
+// ====== Auto  premium ======
+setInterval(()=>{
+  usersList.forEach(u=>{
+    if(u.isPremium && u.expTime>0) u.expTime--;
+  });
+}, 1000);
+
+// ====== Logout ======
+document.getElementById('loginLogoutBtn').addEventListener('click',()=>{
+  currentUser=null; currentRole=null;
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('mainContent').style.display='none';
+  document.querySelectorAll('.owner-only').forEach(el=>el.style.display="none");
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display="none");
+});
+
+// ======  ======
+const map = L.map('ipMap',{zoomControl:false}).setView([0,0],2);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© OpenStreetMap contributors'}).addTo(map);
+let marker = L.marker([0,0], {riseOnHover:true}).addTo(map).bindPopup("World").openPopup();
+async function locateIP(ip){
+  try{
+    const res = await fetch(`https://ipapi.co/${ip}/json/`);
+    const data = await res.json();
+    if(data.latitude && data.longitude){
+      const lat=data.latitude, lng=data.longitude;
+      marker.setLatLng([lat,lng]);
+      marker.bindPopup(`<b>${ip}</b><br>${data.city}, ${data.region}, ${data.country_name}`).openPopup();
+      map.setView([lat,lng],7,{animate:true});
+      const el = marker._icon;
+      if(el){ el.style.transition="transform 0.5s, box-shadow 0.5s"; el.style.transform="scale(1.2)"; el.style.boxShadow="0 0 20px #4ecca3, 0 0 40px #4ecca3"; setTimeout(()=>{el.style.transform="scale(1)"; el.style.boxShadow="0 0 15px #4ecca3";},500);}
+    } else {alert("IP tidak valid atau tidak ditemukan");}
+  } catch(err){alert("Terjadi kesalahan: "+err);}
+}
+document.getElementById("locateBtn").addEventListener("click", ()=>{
+  const ip=document.getElementById("ipInput").value.trim(); if(ip) locateIP(ip);
+});
+</script>
+</body>
+</html>
+
+
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROTECT ELUCATION Version 2.2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body,html{height:100%;overflow-x:hidden;background:#000;color:#fff;}
+
+/* Video Background */
+video.bg-video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-1;filter:brightness(0.3);}
+
+/* Container */
+.container{width:100%;max-width:1100px;margin:auto;padding:20px;}
+
+/* Glassmorphism Card */
+.glass-card{
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border-radius:20px;
+  padding:25px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.2);
+}
+
+/* Login Page */
+#login-page{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;}
+.login-box{text-align:center;width:100%;max-width:450px;animation:fadeIn 1s;}
+.logo{width:140px;height:140px;border-radius:50%;margin:auto;margin-bottom:20px;overflow:hidden;box-shadow:0 0 25px #00c3ff;}
+.logo img{width:100%;height:100%;object-fit:cover;}
+.login-box h2{font-weight:700;margin-bottom:20px;font-size:26px;color:#00c3ff;}
+.input-group{position:relative;margin:18px 0;}
+.input-group i{position:absolute;left:18px;top:15px;color:#00c3ff;font-size:20px;}
+.login-box input{width:100%;padding:14px 14px 14px 50px;border:none;border-radius:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:17px;}
+.login-box button{width:100%;padding:16px;margin-top:18px;border:none;border-radius:14px;background:#00c3ff;color:#fff;font-weight:700;cursor:pointer;transition:.3s;font-size:16px;}
+.login-box button:hover{opacity:.85;}
+
+/* Main Panel */
+#main-panel{display:none;min-height:100vh;padding:20px;animation:fadeIn 1s;}
+.header{text-align:center;margin-bottom:35px;}
+.header h1{font-size:42px;font-weight:900;color:#00c3ff;}
+.header p{color:#ccc;margin-top:5px;font-size:18px;}
+
+/* Menu Buttons Grid */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px;margin-bottom:30px;}
+.menu-btn{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:22px;border-radius:18px;background:rgba(255,255,255,0.06);
+  cursor:pointer;transition:0.3s;box-shadow:0 6px 25px rgba(0,0,0,0.5);
+  text-align:center;font-weight:700;color:#fff;font-size:15px;
+}
+.menu-btn i{font-size:28px;color:#00c3ff;transition:0.3s;}
+.menu-btn:hover{background:#00c3ff;color:#000;transform:translateY(-6px);box-shadow:0 10px 35px rgba(0,0,0,0.8);}
+.menu-btn.active{background:#00c3ff;color:#000;}
+
+/* Section Cards */
+.section{display:none;margin-top:12px;}
+.section.active{display:block;}
+.card h3{margin-bottom:18px;color:#00c3ff;font-size:22px;}
+.form-group{margin:14px 0;}
+input,select,textarea{width:100%;padding:14px;border-radius:12px;background:rgba(0,0,0,0.5);color:#fff;font-size:16px;}
+textarea{min-height:120px;}
+.btn{width:100%;padding:16px;margin-top:18px;border:none;border-radius:14px;background:#00c3ff;color:#fff;font-weight:700;cursor:pointer;transition:0.3s;font-size:16px;}
+.btn:hover{opacity:.85;}
+
+/* Terminal */
+.terminal{background:rgba(0,0,0,0.6);border-radius:10px;padding:15px;margin-top:15px;font-family:monospace;font-size:14px;max-height:250px;overflow-y:auto;display:none;}
+.terminal .line{margin:6px 0;color:#00ff66;}
+.terminal .error{color:#ff3366;}
+
+/* Chat Box */
+.chat-box{background:rgba(0,0,0,0.6);border-radius:12px;padding:15px;max-height:250px;overflow-y:auto;margin-top:12px;}
+.chat-msg{margin:5px 0;padding:8px 12px;border-radius:10px;}
+.chat-msg.user{background:#00c3ff;color:#000;text-align:right;}
+.chat-msg.other{background:#fff;color:#000;text-align:left;}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+</style>
+</head>
+<body>
+
+<!-- Video Background -->
+<video autoplay muted loop class="bg-video">
+  <source src="https://files.catbox.moe/ay0jjv.mp4" type="video/mp4">
+</video>
+
+<!-- Login Page -->
+<div id="login-page" class="container">
+  <div class="glass-card login-box">
+    <div class="logo"><img src="https://files.catbox.moe/c0g45a.jpg" alt="Logo"></div>
+    <h2><i class="fas fa-user-lock"></i>PROTECT ELUCATION</h2>
+    <div class="input-group"><i class="fas fa-user"></i><input type="text" id="username" placeholder="Username"></div>
+    <div class="input-group"><i class="fas fa-key"></i><input type="password" id="password" placeholder="Password"></div>
+    <button onclick="login()"><i class="fas fa-sign-in-alt"></i> Login</button>
+  </div>
+</div>
+
+<!-- Main Panel -->
+<div id="main-panel" class="container">
+  <div class="header"><h1>Version 2.2.0</h1><p>PROTECT ELUCATION</p></div>
+
+  <!-- Menu Buttons -->
+  <div class="menu-grid">
+    <div class="menu-btn active" onclick="showSection('ddos', this)"><i class="fas fa-bomb"></i>DDoS</div>
+    <div class="menu-btn" onclick="showSection('wa', this)"><i class="fab fa-whatsapp"></i>WhatsApp</div>
+    <div class="menu-btn" onclick="showSection('bug', this)"><i class="fas fa-bug"></i>Bug</div>
+    <div class="menu-btn" onclick="showSection('wifi', this)"><i class="fas fa-wifi"></i>WiFi</div>
+    <div class="menu-btn" onclick="showSection('ai', this)"><i class="fas fa-robot"></i>AI</div>
+    <div class="menu-btn" onclick="showSection('translate', this)"><i class="fas fa-language"></i>Terjemahkan</div>
+    <div class="menu-btn" onclick="showSection('enc', this)"><i class="fas fa-lock"></i>Encrypt</div>
+    <div class="menu-btn" onclick="showSection('chat', this)"><i class="fas fa-comments"></i>Chat</div>
+    <div class="menu-btn" id="admin-tab" onclick="showSection('admin', this)"><i class="fas fa-user-shield"></i>Admin</div>
+  </div>
+
+  <div class="glass-card card">
+
+    <!-- DDoS -->
+    <div id="ddos-section" class="section active">
+      <h3><i class="fas fa-bomb"></i> DDoS Attack</h3>
+      <div class="form-group"><label>Target</label><input id="target" placeholder="https://example.com"></div>
+      <div class="form-group"><label>Pilih Target</label><select id="ddos-method"><option>HTTP Flood</option><option>SYN Flood</option></select></div>
+      <div class="form-group"><label>Duration</label><input type="number" id="duration" value="60"></div>
+      <button class="btn" onclick="startAttack()">Launch</button>
+      <div id="ddos-terminal" class="terminal"></div>
+    </div>
+
+    <!-- WhatsApp -->
+    <div id="wa-section" class="section">
+      <h3><i class="fab fa-whatsapp"></i> WhatsApp Spam</h3>
+      <div class="form-group"><label>Number</label><input id="phone"></div>
+      <div class="form-group"><label>Message</label><textarea id="message"></textarea></div>
+      <div class="form-group"><label>Count</label><input type="number" id="count" value="10"></div>
+      <button class="btn" onclick="sendWa()">Send</button>
+      <div id="wa-terminal" class="terminal"></div>
+    </div>
+
+    <!-- Bug -->
+    <div id="bug-section" class="section">
+      <h3><i class="fas fa-bug"></i> Bug Target</h3>
+      <div class="form-group"><label>Target App</label><input id="bug-target"></div>
+      <div class="form-group"><label>Pilih Target</label><select id="bug-pilih"><option>MonologInvis</option><option>CrashedProtect</option><option>BlackChat</option><option>AndriosCrsh</option></select></div>
+      <div class="form-group"><label>Count</label><input type="number" id="bug-count" value="50"></div>
+      <button class="btn" onclick="sendBug()">Inject</button>
+      <div id="bug-terminal" class="terminal"></div>
+    </div>
+
+    <!-- WiFi -->
+    <div id="wifi-section" class="section">
+      <h3><i class="fas fa-wifi"></i> WiFi Hack</h3>
+      <div class="form-group"><label>SSID</label><input id="ssid"></div>
+      <div class="form-group"><label>Password List</label><textarea id="wifi-pass"></textarea></div>
+      <button class="btn" onclick="wifiHack()">Crack</button>
+      <div id="wifi-terminal" class="terminal"></div>
+    </div>
+
+    <!-- AI -->
+    <div id="ai-section" class="section">
+      <h3><i class="fas fa-robot"></i> AI Assistant</h3>
+      <div class="form-group"><label>Masukkan Pertanyaan</label><textarea id="ai-input"></textarea></div>
+      <button class="btn" onclick="askAI()">Tanya AI</button>
+      <div id="ai-terminal" class="terminal"></div>
+    </div>
+
+    <!-- Translator -->
+    <div id="translate-section" class="section">
+      <h3><i class="fas fa-language"></i> Translator</h3>
+      <div class="form-group"><label>Masukkan Teks</label><textarea id="translate-input"></textarea></div>
+      <div class="form-group"><label>Dari Bahasa</label><input id="translate-from" placeholder="auto"></div>
+      <div class="form-group"><label>Ke Bahasa</label><input id="translate-to" placeholder="id"></div>
+      <button class="btn" onclick="translateText()">Terjemahkan</button>
+      <div id="translate-terminal" class="terminal"></div>
+    </div>
+
+    <!-- Encrypt/Decrypt -->
+    <div id="enc-section" class="section">
+      <h3><i class="fas fa-lock"></i> Encrypt / Decrypt</h3>
+      <div class="form-group"><label>Masukkan Teks</label><textarea id="enc-input"></textarea></div>
+      <button class="btn" onclick="encryptText()">Encrypt</button>
+      <button class="btn" onclick="decryptText()">Decrypt</button>
+      <div id="enc-terminal" class="terminal"></div>
+    </div>
+
+    <!-- Chat -->
+    <div id="chat-section" class="section">
+      <h3><i class="fas fa-comments"></i> Chat Antar-User</h3>
+      <div class="form-group"><label>Username</label><input id="chat-user"></div>
+      <div class="form-group"><label>Pesan</label><textarea id="chat-msg"></textarea></div>
+      <button class="btn" onclick="sendChat()">Kirim Pesan</button>
+      <div id="chat-terminal" class="chat-box"></div>
+    </div>
+
+    <!-- Admin -->
+    <div id="admin-section" class="section">
+      <h3><i class="fas fa-user-shield"></i> Admin Panel</h3>
+      <p>Fungsi administrator</p>
+      <div class="form-group"><label>Tambah User</label><input id="new-user" placeholder="Username"></div>
+      <div class="form-group"><label>Password</label><input id="new-pass" type="password"></div>
+      <button class="btn" onclick="addUser()">Tambah User</button>
+      <div id="admin-terminal" class="terminal"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let users=[{username:"admin",password:"1234"}];
+
+function login(){
+  const u=document.getElementById('username').value,p=document.getElementById('password').value;
+  let found=users.find(x=>x.username===u&&x.password===p);
+  if(found){
+    document.getElementById('login-page').style.display="none";
+    document.getElementById('main-panel').style.display="block";
+    if(u!=="admin"){document.getElementById("admin-tab").style.display="none";}
+  }else{alert("BUY AKSES? t.me/Vinzzblasternew");}
+}
+
+function showSection(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id+'-section').classList.add('active');btn.classList.add('active');
+}
+
+
+function startAttack(){
+  let t=document.getElementById('ddos-terminal'); t.style.display='block';
+  t.innerHTML+='<div class="line">SERANGAN DIMULAI 💣...</div>';
+  setTimeout(()=>{t.innerHTML+='<div class="line">SERANGAN BERHASIL TERKIRIM 💥selesai!</div>'; t.scrollTop = t.scrollHeight;},1500);
+}
+function sendWa(){
+  let t=document.getElementById('wa-terminal'); t.style.display='block';
+  t.innerHTML+='<div class="line">📨 Sending WA...</div>';
+  setTimeout(()=>{t.innerHTML+='<div class="line">✅ Pesan terkirim!</div>'; t.scrollTop = t.scrollHeight;},1200);
+}
+function sendBug(){
+  let t=document.getElementById('bug-terminal'); t.style.display='block';
+  t.innerHTML+='<div class="line">PROSES SENDBUG...</div>';
+  setTimeout(()=>{t.innerHTML+='<div class="line">SUKSES BUG PARA HAMA✅</div>'; t.scrollTop = t.scrollHeight;},1200);
+}
+function wifiHack(){
+  let t=document.getElementById('wifi-terminal'); t.style.display='block';
+  t.innerHTML+='<div class="line">🔓 Cracking WiFi...</div>';
+  setTimeout(()=>{t.innerHTML+='<div class="line">❌ Crack gagal!</div>'; t.scrollTop = t.scrollHeight;},1500);
+}
+function askAI(){
+  let q=document.getElementById('ai-input').value; let t=document.getElementById('ai-terminal'); t.style.display='block';
+  t.innerHTML+=`<div class="line">👤: ${q}</div>`;
+  setTimeout(()=>{t.innerHTML+=`<div class="line">🤖: Jawaban AI untuk "${q}"</div>`; t.scrollTop = t.scrollHeight;},1200);
+}
+function addUser(){
+  let u=document.getElementById('new-user').value; let p=document.getElementById('new-pass').value;
+  if(!u||!p){alert("Isi username & password!");return;}
+  users.push({username:u,password:p});
+  let t=document.getElementById('admin-terminal'); t.style.display='block';
+  t.innerHTML+=`<div class="line">✅ User ${u} berhasil ditambahkan!</div>`; t.scrollTop = t.scrollHeight;
+}
+
+
+async function translateText(){
+  let text=document.getElementById('translate-input').value;
+  let from=document.getElementById('translate-from').value||"auto";
+  let to=document.getElementById('translate-to').value||"id";
+  let t=document.getElementById('translate-terminal'); t.style.display='block';
+  t.innerHTML+=`<div class="line">🌐 Translating...</div>`;
+  try{
+    let res=await fetch("https://libretranslate.de/translate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({q:text,source:from,target:to,format:"text"})});
+    let data=await res.json();
+    t.innerHTML+=`<div class="line">✅ ${data.translatedText}</div>`; t.scrollTop = t.scrollHeight;
+  }catch(e){
+    t.innerHTML+=`<div class="line error">❌ Terjadi kesalahan</div>`; t.scrollTop = t.scrollHeight;
+  }
+}
+
+
+function encryptText(){
+  let input=document.getElementById('enc-input').value; let t=document.getElementById('enc-terminal'); t.style.display='block';
+  let encrypted=btoa(input); t.innerHTML+=`<div class="line">🔒 ${encrypted}</div>`; t.scrollTop = t.scrollHeight;
+}
+function decryptText(){
+  let input=document.getElementById('enc-input').value; let t=document.getElementById('enc-terminal'); t.style.display='block';
+  try{let decrypted=atob(input); t.innerHTML+=`<div class="line">🔓 ${decrypted}</div>`; t.scrollTop = t.scrollHeight;}
+  catch(e){t.innerHTML+=`<div class="line error">❌ Tidak bisa decrypt</div>`; t.scrollTop = t.scrollHeight;}
+}
+
+
+let chatLog=[];
+function sendChat(){
+  let user=document.getElementById('chat-user').value;
+  let msg=document.getElementById('chat-msg').value;
+  let t=document.getElementById('chat-terminal'); t.style.display='block';
+  if(!user || !msg){t.innerHTML+='<div class="line error">❌ Isi username & pesan!</div>'; t.scrollTop = t.scrollHeight; return;}
+  // Simulate sending
+  chatLog.push({user,msg}); t.innerHTML+=`<div class="chat-msg user">📤 ${user}: ${msg}</div>`; t.scrollTop = t.scrollHeight;
+  setTimeout(()=>{t.innerHTML+=`<div class="chat-msg other">📥 ${user} telah menerima pesan ✅</div>`; t.scrollTop = t.scrollHeight;},1000);
+  document.getElementById('chat-msg').value='';
+}
+</script>
+
+</body>
+</html>
